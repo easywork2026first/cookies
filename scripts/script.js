@@ -12,6 +12,11 @@ for (let i = 0; i < links.length; i++) {
 const buttons = document.querySelectorAll(".products-item .button");
 for (let i = 0; i < buttons.length; i++) {
     buttons[i].onclick = function () {
+        // Получаем название печенья из closest продукта
+        const productName = this.closest(".products-item").querySelector(".products-item-title").innerText;
+        // Вставляем название в поле input
+        document.getElementById("product").value = productName;
+        // Скроллим к форме заказа
         document.getElementById("order").scrollIntoView({behavior: "smooth"});
     }
 }
