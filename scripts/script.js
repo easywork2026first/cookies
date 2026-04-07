@@ -13,16 +13,20 @@ for (let i = 0; i < links.length; i++) {
 const buttons = document.querySelectorAll(".products-item .button");
 for (let i = 0; i < buttons.length; i++) {
     buttons[i].onclick = function () {
-        // Получаем название печенья из closest продукта
         const productName = this.closest(".products-item").querySelector(".products-item-title").innerText;
-        // Вставляем название в поле input
+        const productPrice = parseFloat(this.closest(".products-item").querySelector(".products-item-price").getAttribute("data-base-price"));
         document.getElementById("product").value = productName;
-        // Скроллим к форме заказа
+        document.getElementById("product").setAttribute("data-price", productPrice);
+        updateOrderSum();
+
         document.getElementById("order").scrollIntoView({behavior: "smooth"});
     }
 }
 
 const prices = document.getElementsByClassName("products-item-price");
+let currentCurrencyCoef = 1;
+let currentCurrencySymbol = "$";
+
 document.getElementById("change-currency").onclick = function (e) {
 
     const currentCurrency = e.target.innerText;
@@ -43,19 +47,47 @@ document.getElementById("change-currency").onclick = function (e) {
         coefficient = 6.9;
     }
     e.target.innerText = newCurrency;
+    currentCurrencyCoef = coefficient;
+    currentCurrencySymbol = newCurrency;
 
     for (let i = 0; i < prices.length; i++) {
         prices[i].innerText = +(prices[i].getAttribute("data-base-price") * coefficient).toFixed(1) + " " + newCurrency;
     }
+    
+    updateOrderSum();
+}
+
+function updateOrderSum() {
+    const product = document.getElementById("product");
+    const quantity = document.getElementById("quantity");
+    const sumSpan = document.getElementById("order-sum");
+    const currencySpan = document.getElementById("sum-currency");
+    
+    const basePrice = parseFloat(product.getAttribute("data-price")) || 0;
+    const qty = parseInt(quantity.value) || 1;
+    
+    if (basePrice > 0) {
+        const totalSum = +(basePrice * qty * currentCurrencyCoef).toFixed(1);
+        sumSpan.innerText = totalSum;
+        quantity.placeholder = `Количество (1-10) - Сумма: ${totalSum} ${currentCurrencySymbol}`;
+    } else {
+        sumSpan.innerText = "0";
+        quantity.placeholder = "Количество (1-10)";
+    }
+    currencySpan.innerText = currentCurrencySymbol;
 }
 
 const product = document.getElementById("product");
+const quantity = document.getElementById("quantity");
 const name = document.getElementById("name");
 const phone = document.getElementById("phone");
+
+quantity.addEventListener("input", updateOrderSum);
+
 document.getElementById("order-action").onclick = function () {
     let hasError = false;
 
-    [product, name, phone].forEach(item => {
+    [product, quantity, name, phone].forEach(item => {
         if (!item.value) {
             item.style.borderColor = "red";
             hasError = true;
@@ -65,9 +97,10 @@ document.getElementById("order-action").onclick = function () {
     });
 
     if (!hasError) {
-        [product, name, phone].forEach(item => {
+        [product, quantity, name, phone].forEach(item => {
             item.value = "";
         });
+        quantity.value = "1";
         alert("Спасибо за заказ! Мы скоро свяжемся с Вами!");
     }
 }
